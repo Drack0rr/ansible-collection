@@ -1,0 +1,45 @@
+---
+- hosts: all
+  gather_facts: True
+  become: True
+  vars_files:
+    - "vars/default.yml"
+
+  tasks:
+
+    - name: Update repositories cache [Debian]
+      apt:
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
+    - name: Update all packages to their latest version [Debian]
+      apt:
+        name: "*"
+        state: latest
+      when: ansible_os_family == "Debian"
+
+    - name: Upgrade the OS (apt-get dist-upgrade) [Debian]
+      apt:
+        upgrade: dist
+      when: ansible_os_family == "Debian"
+
+    - name: Upgrade RHEL Family OS packages [RedHat]
+      yum:
+        name: '*'
+        state: latest
+      when: ansible_os_family == "RedHat"
+
+    - name: Research file "reboot_required"
+      stat:
+        path: /var/run/reboot-required
+      register: __stat_reboot_required_file
+
+    - name: Reboot if necessary
+      reboot:
+        msg: "Reboot via ansible"
+        connect_timeout: "{{ reboot_connect_timeout }}"
+        reboot_timeout: "{{ reboot_timeout }}"
+        pre_reboot_delay: "{{reboot_pre_reboot_delay}}"
+        post_reboot_delay: "{{ reboot_post_reboot_delay }}"
+        test_command: uptime
+      when: __stat_reboot_required_file.stat.exists
