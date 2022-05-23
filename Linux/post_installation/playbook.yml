@@ -4,6 +4,7 @@
   become: True
   vars_files:
     - "vars/default.yml"
+    - "vars/secret.yml"
   roles:
     - requirements
     - customize
