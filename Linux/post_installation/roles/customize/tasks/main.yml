@@ -1,0 +1,45 @@
+---
+- name: Delete default MOTD
+  file:
+    state: absent
+    path: "/etc/motd"
+
+- name: Add motd modified
+  template:
+    src: "files/motd"
+    dest: "/etc/motd"
+    owner: root
+    group: root
+    mode: u=rw,g=r,o=r
+
+- name: Change server name for {{ customize_hostname_short }}
+  ansible.builtin.hostname:
+    name: "{{ customize_hostname_short }}"
+
+
+- name: Add FQDN in /etc/hosts 127.0.0.1
+  lineinfile:
+    dest: /etc/hosts
+    regexp: '^127\.0\.1\.1'
+    line: "127.0.1.1 {{ customize_hostname_short }} {{ customize_hostname }}"
+    state: present
+
+- name: Add FQDN in /etc/hosts {{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}
+  lineinfile:
+    dest: /etc/hosts
+    regexp: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
+    line: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }} {{ customize_hostname }} {{ customize_hostname_short }}"
+    state: present
+
+- name: Disabled SELinux
+  ansible.posix.selinux:
+    state: disabled
+  when: ansible_os_family == "RedHat"
+
+- name: Disabled SELinux permanent
+  lineinfile:
+    dest: /etc/selinux/config
+    regexp: "SELINUX="
+    line: "SELINUX=disabled"
+    state: present
+  when: ansible_os_family == "RedHat"

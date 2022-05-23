@@ -1,0 +1,40 @@
+---
+- name : Install FirewallD
+  apt:
+    name:  firewalld
+    update_cache: yes
+    state: latest
+  when: ansible_os_family == "Debian"
+
+- name : Enable FirewallD
+  service:
+    name: firewalld
+    state: started
+    enabled: yes
+
+- name: Delete rules ssh in FirewallD
+  ansible.posix.firewalld:
+    service: ssh
+    permanent: yes
+    immediate: yes
+    state: disabled
+
+- name: Add SSH port {{ firewall_ssh_port }} in FirewallD
+  firewalld:
+    permanent: yes
+    immediate: yes
+    port: "{{ item.port }}/{{ item.proto }}"
+    state: "{{ item.state }}"
+  with_items:
+    - { port: "{{ firewall_ssh_port }}", proto: "tcp", state: "enabled" }
+
+- name: Change SSH port in /etc/ssh/sshd_config
+  lineinfile:
+    dest: "/etc/ssh/sshd_config"
+    regexp: "^Port"
+    line: "Port {{ firewall_ssh_port }}"
+
+- name: Restart service SSH
+  service:
+    name: sshd
+    state: restarted

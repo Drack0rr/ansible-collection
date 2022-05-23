@@ -1,0 +1,20 @@
+---
+- name: Update repositories cache
+  apt:
+    update_cache: true
+
+- name: Update all packages to their latest version
+  apt:
+    name: "*"
+    state: latest
+
+- name: Upgrade the OS (apt-get dist-upgrade)
+  apt:
+    upgrade: dist
+
+- name: Installation prerequisites
+  apt:
+    name: "{{ item }}"
+    update_cache: true
+    state: latest
+  loop: "{{ prerequis }}"

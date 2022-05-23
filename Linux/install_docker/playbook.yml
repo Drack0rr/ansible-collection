@@ -1,0 +1,88 @@
+---
+- hosts: all
+  gather_facts: True
+  become: True
+
+  tasks:
+
+    - name: Add repository docker [RedHat]
+      get_url:
+        url: https://download.docker.com/linux/centos/docker-ce.repo
+        dest: /etc/yum.repos.d/docker-ce.repo
+      when: ansible_os_family == "RedHat"
+
+    - name: Install apt-transport-https [Debian]
+      apt:
+        name: 
+        - apt-transport-https
+        - ca-certificates
+        - lsb-release
+        - gnupg
+        state: latest
+        update_cache: true
+      when: ansible_os_family == "Debian"
+
+    - name: Add signing key [Debian]
+      apt_key:
+        url: "https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg"
+        state: present
+      when: ansible_os_family == "Debian"
+
+    - name: Add repository into sources list [Debian]
+      apt_repository:
+        repo: "deb [arch={{ ansible_architecture }}] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
+        state: present
+        filename: docker
+      when: ansible_os_family == "Debian"
+
+    - name: Enable repository Docker Edge [RedHat]
+      ini_file:
+        dest: /etc/yum.repos.d/docker-ce.repo
+        section: 'docker-ce-edge'
+        option: enabled
+        value: "0"
+      when: ansible_os_family == "RedHat"
+
+    - name: Enable repository Docker CE Test [RedHat]
+      ini_file:
+        dest: /etc/yum.repos.d/docker-ce.repo
+        section: 'docker-ce-test'
+        option: enabled
+        value: "0"
+      when: ansible_os_family == "RedHat"
+
+    - name: Installe Docker CE [RedHat]
+      package:
+        name: 
+        - docker-ce
+        state: latest
+      when: ansible_os_family == "RedHat"
+
+    - name: Install Docker [Debian]
+      apt:
+        name:
+        - docker
+        - docker.io
+        #- docker-registry
+        state: latest
+      when: ansible_os_family == "Debian"
+
+    - name: Started Docker service
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Check if Docker Compose is installed
+      command: docker-compose --version
+      register: docker_compose_check
+      ignore_errors: True
+
+    - name: Download and install Docker Compose
+      get_url:
+        url: https://github.com/docker/compose/releases/download/v2.5.1/docker-compose-linux-x86_64
+        dest: /usr/local/bin/docker-compose
+        mode: 'u+x,g+x'
+      when:
+        - docker_compose_check.msg is defined
+        - docker_compose_check.msg.find('No such file or directory') != -1 or docker_compose_check.msg.find('Aucun fichier ou dossier de ce type') != -1
