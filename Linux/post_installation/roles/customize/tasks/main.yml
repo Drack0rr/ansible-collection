@@ -1,10 +1,10 @@
 ---
-- name: delete default MOTD
+- name: Delete default MOTD
   file:
     state: absent
     path: "/etc/motd"
 
-- name: Créer motd
+- name: Add motd modified
   template:
     src: "files/motd"
     dest: "/etc/motd"
@@ -12,7 +12,7 @@
     group: root
     mode: u=rw,g=r,o=r
 
-- name: change server name for {{ customize_hostname_short }}
+- name: Change server name for {{ customize_hostname_short }}
   ansible.builtin.hostname:
     name: "{{ customize_hostname_short }}"
 

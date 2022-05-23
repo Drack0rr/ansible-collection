@@ -5,6 +5,7 @@
   vars_files:
     - "vars/default.yml"
     - "vars/secret.yml"
+    #- "vars/secret-example.yml"
   roles:
     - requirements
     - customize
