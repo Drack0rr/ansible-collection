@@ -1,0 +1,31 @@
+---
+- name : Install FirewallD
+  apt:
+    name:  firewalld
+    update_cache: yes
+    state: latest
+  when: ansible_os_family == "Debian"
+
+- name : Enable FirewallD
+  service:
+    name: firewalld
+    state: started
+    enabled: yes
+
+- name: Supprime la règle de parefeu ssh service
+  ansible.posix.firewalld:
+    service: ssh
+    permanent: yes
+    immediate: yes
+    state: disabled
+
+- name: Modifie port SSH dans /etc/ssh/sshd_config
+  lineinfile:
+    dest: "/etc/ssh/sshd_config"
+    regexp: "^Port"
+    line: "Port {{ firewall_ssh_port }}"
+
+- name: Redémarre le service SSH
+  service:
+    name: sshd
+    state: restarted

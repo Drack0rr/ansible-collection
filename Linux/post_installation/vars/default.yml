@@ -1,0 +1,15 @@
+#Reboot
+reboot_connect_timeout: 5
+reboot_post_reboot_delay: 15
+reboot_timeout: 600
+reboot_pre_reboot_delay: 0
+
+#Motd
+name_environment: 
+
+#Prerequisites
+prerequis: [ 'nano', 'sudo', 'mlocate', 'curl', 'bash-completion', 'firewalld', 'parted' ]
+prerequis_rhel: [ 'epel-release', 'yum-utils']
+
+#Firewall
+firewall_ssh_port: 22
