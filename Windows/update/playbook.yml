@@ -1,0 +1,8 @@
+---
+- name: "Playbook Windows Update/Upgrade"
+  hosts: all
+  gather_facts: True
+  
+  roles:
+    - windows_update
+    - windows_upgrade

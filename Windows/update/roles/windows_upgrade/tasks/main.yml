@@ -1,0 +1,11 @@
+---
+- name: Install Windows updates
+  win_updates:
+    log_path: C:\GESTION\Logs\win_upgrade.log
+    category_names: '*'
+    state: installed
+  register: update_result
+
+- name: Restart server if needed
+  win_reboot:
+  when: update_result.reboot_required

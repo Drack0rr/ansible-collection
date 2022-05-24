@@ -1,0 +1,22 @@
+---
+- name: Create the folder "GESTION" and "Logs"
+  win_file:
+    path: C:\GESTION\Logs
+    state: directory
+
+- name: Check the windows update
+  win_updates:
+    log_path: C:\GESTION\Logs\win_searched.log
+    category_names: '*'
+    state: searched
+  register: search_result
+
+- name: Restart server if needed
+  win_reboot:
+  when: search_result.reboot_required
+
+- name: Download updates
+  win_updates:
+    log_path: C:\GESTION\Logs\win_downloaded.log
+    category_names: '*'
+    state: downloaded
