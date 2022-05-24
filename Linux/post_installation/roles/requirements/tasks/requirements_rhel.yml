@@ -5,7 +5,7 @@
     state: latest
 
 - name: Installation prerequisites
-  dnf:
+  yum:
     name: "{{ item }}"
     update_cache: yes
     state: latest
