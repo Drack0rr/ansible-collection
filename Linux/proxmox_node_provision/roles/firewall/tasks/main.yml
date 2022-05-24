@@ -1,0 +1,22 @@
+---
+- name : Install FirewallD
+  apt:
+    name:  firewalld
+    update_cache: yes
+    state: latest
+  when: ansible_os_family == "Debian"
+
+- name : Enable FirewallD
+  service:
+    name: firewalld
+    state: started
+    enabled: yes
+
+- name: Add web acces port 8006/TCP in FirewallD
+  firewalld:
+    permanent: yes
+    immediate: yes
+    port: "{{ item.port }}/{{ item.proto }}"
+    state: "{{ item.state }}"
+  with_items:
+    - { port: "8006", proto: "tcp", state: "enabled" }

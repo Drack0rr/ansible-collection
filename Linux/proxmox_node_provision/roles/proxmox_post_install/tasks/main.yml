@@ -1,0 +1,97 @@
+---
+- name: Installation additional package
+  apt:
+    name: "{{ item }}"
+    update_cache: yes
+    state: latest
+  with_items: 
+    - ifupdown2
+    - libsasl2-modules
+    - fail2ban
+
+- name: Check fail2ban filter configuration
+  stat: 
+    path: "/etc/fail2ban/filter.d/proxmox-virtual-environement.conf"
+  register: __stat_fail2banfilter
+
+- name: Check fail2ban jail configuration
+  stat: 
+    path: "/etc/fail2ban/jail.d/proxmox-virtual-environement.conf"
+  register: __stat_fail2banjail
+
+- name: Create fail2ban filter file
+  template:
+    src: "files/filter.d/proxmox-virtual-environement.conf"
+    dest: "/etc/fail2ban/filter.d/proxmox-virtual-environement.conf"
+    owner: root
+    group: root
+    mode: u=rw,g=r,o=r
+  when: __stat_fail2banfilter.stat.exists == false
+
+- name: Create fail2ban jail file
+  template:
+    src: "files/jail.d/proxmox-virtual-environement.conf"
+    dest: "/etc/fail2ban/jail.d/proxmox-virtual-environement.conf"
+    owner: root
+    group: root
+    mode: u=rw,g=r,o=r
+  when: __stat_fail2banjail.stat.exists == false
+
+- name: Enable Fail2Ban
+  service:
+    name: fail2ban
+    enabled: yes
+    state: restarted
+  when: __stat_fail2banfilter.stat.exists == false or __stat_fail2banjail.stat.exists == false
+  
+- name: Check if swap is disabled
+  stat: 
+    path: "/etc/sysctl.d/swappiness.conf"
+  register: __stat_swappiness
+
+- name: Changing swap value to 0 - Use only when out of memory
+  command: sysctl vm.swappiness=0
+  when: __stat_swappiness.stat.exists == false
+
+- name: Create the configuration file vm.swappiness
+  template:
+    src: "files/swappiness.conf"
+    dest: "/etc/sysctl.d/swappiness.conf"
+    owner: root
+    group: root
+    mode: u=rw,g=r,o=r
+  when: __stat_swappiness.stat.exists == false
+
+- name: swapoff
+  command: swapoff -a
+  when: __stat_swappiness.stat.exists == false
+
+- name: swapon
+  command: swapon -a
+  when: __stat_swappiness.stat.exists == false
+
+- name: Create the backup folder in the root
+  file:
+    path: "/backup"
+    state: directory
+    mode: "0755"
+
+- name: Checking SMART configuration
+  stat: 
+    path: "/backup/smartd.conf.backup"
+  register: __stat_smartbackup
+
+# Ne fonctionne pas n'a pas les droits
+- name: Créer un .backup de /etc/smartd.conf 
+  command: mv "/etc/smartd.conf" "/backup/smartd.conf.backup"
+  when: __stat_smartbackup.stat.exists == false
+
+# Active la vérification SMART tous les samedi dès 22h et une fois par mois à 22h
+- name: Enable SMART verification
+  template:
+    src: "files/smartd.conf"
+    dest: "/etc/smartd.conf"
+    owner: root
+    group: root
+    mode: u=rw,g=r,o=r  
+  when: __stat_smartbackup.stat.exists == false

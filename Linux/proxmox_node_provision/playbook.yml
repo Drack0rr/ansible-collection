@@ -1,0 +1,55 @@
+#Playbook hyperviseur
+---
+- name: "Playbook hyperviseur Proxmox"
+  hosts: all
+  gather_facts: True
+  become: True
+
+  vars_files:
+    - "vars/default.yml"
+  
+  roles:
+    - requirements
+    - firewall
+    - role: lae.proxmox
+      pve_datacenter_cfg:
+        keyboard: fr
+      pve_groups:
+      - name: Admins
+        comment: Administrateurs du cluster PVE
+      - name: Clients
+        comment: Groupes Clients
+      pve_users:
+        - name: root@pam
+          email: root@{{ domain_mail }}
+        - name: admin-local@pam
+          email: admin-local@{{ domain_mail }}
+          groups: [ "Admins" ]
+        #- name: visiteur@pve
+        #  email: visiteur@{{ domain_mail }}
+        #  firstname: user2
+        #  lastname: user2
+        #  password: "user2"
+        #  groups: [ "Clients" ]
+
+      pve_storages:
+        - name: datastore
+          type: dir
+          content: [ "images", "iso" ]
+          path: /datastore
+          disable: no
+        - name: local
+          type: dir
+          content: [ "images" ]
+          path: /var/lib/vz
+          disable: yes
+      pve_acls: # This should generate different ACLs
+        - path: /
+          roles: [ "Administrator" ]
+          groups: [ "Admins" ]
+        - path: /vms
+          roles: [ "PVEVMUser" ]
+          groups: [ "Clients" ]
+      pve_reboot_on_kernel_update: yes
+    
+    - proxmox_post_install
